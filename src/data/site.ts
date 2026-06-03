@@ -18,7 +18,7 @@ export const site = {
 export const stats = [
   { value: '10+', label: 'Years shipping', sub: 'Engineering leadership at Airbnb, Twitter, and early-stage startups' },
   { value: '$23.9M', label: 'Annualized impact', sub: 'Identity and trust systems shipped in 2025' },
-  { value: '0 → 1', label: 'Shipped solo', sub: 'Three AI-native products built and launched in the last year' },
+  { value: '26 repos', label: 'Shipped solo', sub: 'AI-native projects built in the last 7 months across Claude Code, voice, agents, and indie SaaS' },
 ];
 
 export const projects = [
@@ -26,12 +26,12 @@ export const projects = [
     title: 'Loadout. The OS layer for Claude Code',
     tag: 'Indie SaaS · Zero to One',
     blurb:
-      'Solo-built and shipped an AI-native product in 60 days: a five-layer Claude Code operating system (CLAUDE.md, hooks, rules, memory, skills) plus an 8-chapter PDF and starter pack. Designed the architecture, wrote the code, built the landing page, ran paid traffic, and closed the first sales.',
+      'Solo-built and shipped in under 5 days: a five-layer Claude Code operating system (CLAUDE.md, hooks, rules, memory, skills) plus an 8-chapter PDF and starter pack. Designed the architecture, wrote the code, built the landing page, ran paid traffic, and closed the first sales.',
     metrics: [
       { v: 'Live', l: 'loadout.hellomilo.app' },
       { v: '5', l: 'Composable layers' },
       { v: '3', l: 'Pricing tiers' },
-      { v: '60 days', l: 'Idea to revenue' },
+      { v: '<5 days', l: 'Idea to ship' },
     ],
     note: 'Built end to end: product, brand, copy, payment rails, gates, deploy pipeline. Shows the full founder loop, not just the engineering slice.',
   },
@@ -61,19 +61,6 @@ export const projects = [
     ],
     note: 'Roughly 7 hosts per week who would have been wrongly suspended are now protected. Country-aware verification waterfall.',
   },
-  {
-    title: 'Verso. AI-native reading companion',
-    tag: 'Indie iOS · Voice AI',
-    blurb:
-      'Native iOS reader plus agent memory built on local LLMs and TTS pipelines. Voice-first, hands-free, ships forwarded newsletters cleanly. Built solo from concept through device QA on iPhone 17 Pro Max.',
-    metrics: [
-      { v: 'iOS', l: 'Native Swift' },
-      { v: 'Local', l: 'On-device LLMs' },
-      { v: 'TTS', l: 'k2-fsa pipeline' },
-      { v: '5', l: 'Slash commands' },
-    ],
-    note: 'Demonstrates the voice-first stack: hands-free coding loops, TTS sweetening, agent memory, multi-modal input.',
-  },
 ];
 
 export const experience = [
@@ -90,14 +77,14 @@ export const experience = [
     ],
   },
   {
-    company: 'Indie (Milo Labs)',
+    company: 'Milo Labs',
     role: 'Solo Founder. AI-Native Products',
     where: 'Sunnyvale, CA',
-    when: '2025 → Present',
+    when: 'Nov 2025 → Present',
     points: [
+      '26 AI-native repos shipped in 7 months on the Claude Code stack.',
       'Loadout. Claude Code OS guide + starter pack. Designed, shipped, monetized.',
-      'Verso. iOS reader with on-device agent memory and voice TTS.',
-      'Glassbox AI. Visual QA agency tooling for AI-generated UI.',
+      'Verso, Glassbox AI, jarvis, pensive, ai-literacy, agent-eng-team and more in active build.',
     ],
   },
   {
