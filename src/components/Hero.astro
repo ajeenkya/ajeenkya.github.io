@@ -11,16 +11,19 @@ import { site, stats } from '../data/site';
   ></div>
   <div class="relative mx-auto max-w-6xl px-6">
     <div class="reveal max-w-3xl">
-      <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-3 py-1 text-xs uppercase tracking-[0.18em] text-mist-300">
-        <span class="size-1.5 rounded-full bg-accent-400"></span> {site.location}
+      <span class="inline-flex items-center gap-2 rounded-full border border-accent-500/30 bg-accent-500/[0.06] px-3 py-1 text-xs uppercase tracking-[0.18em] text-accent-300">
+        <span class="size-1.5 animate-pulse rounded-full bg-accent-400"></span> Open to founding roles
       </span>
       <h1 class="font-display mt-8 text-5xl font-semibold leading-[1.02] text-balance text-mist-100 sm:text-6xl md:text-7xl">
         <span class="gradient-text">AI engineer.</span><br />
-        Technical founder.<br />
-        Engineering leader.
+        Operator.<br />
+        Founding-team builder.
       </h1>
       <p class="mt-8 max-w-2xl text-lg text-mist-300 text-pretty">
         {site.description}
+      </p>
+      <p class="mt-6 max-w-2xl text-base text-mist-400 text-pretty">
+        {site.status} {site.location}.
       </p>
       <div class="mt-10 flex flex-wrap items-center gap-3">
         <a href="#contact" class="btn-primary">Get in touch</a>
