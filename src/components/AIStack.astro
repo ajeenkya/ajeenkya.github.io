@@ -1,0 +1,32 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import { aiStack } from '../data/site';
+---
+<section id="ai" class="relative py-32">
+  <div class="absolute inset-x-0 top-1/2 -z-10 mx-auto h-[360px] max-w-3xl -translate-y-1/2 rounded-full opacity-50 blur-3xl"
+    style="background: radial-gradient(closest-side, rgba(94,234,212,0.18), transparent 70%);"
+    aria-hidden="true"
+  ></div>
+  <div class="mx-auto max-w-6xl px-6">
+    <SectionHeader
+      eyebrow="AI & Agents"
+      title="Building the AI-native stack"
+      lede="Hands-free coding, voice AI, LLM agents, SaaS experiments, and the doc cascades that make them ship."
+    />
+    <div class="mt-16 grid gap-4 md:grid-cols-2">
+      {aiStack.map((s) => (
+        <div class="reveal glass flex items-start gap-5 rounded-2xl p-6">
+          <span class="mt-1 inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent-500/15 text-accent-400">
+            <svg viewBox="0 0 24 24" class="size-4" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </span>
+          <div>
+            <h3 class="font-display text-lg font-semibold text-mist-100">{s.k}</h3>
+            <p class="mt-2 text-mist-300">{s.v}</p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>

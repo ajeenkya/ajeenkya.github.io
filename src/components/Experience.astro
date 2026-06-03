@@ -1,0 +1,31 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import { experience } from '../data/site';
+---
+<section id="experience" class="relative py-32">
+  <div class="mx-auto max-w-6xl px-6">
+    <SectionHeader eyebrow="Experience" title="Career journey" />
+    <ol class="relative mx-auto mt-16 max-w-3xl border-l border-white/10">
+      {experience.map((e, i) => (
+        <li class="reveal relative pl-8 pb-12 last:pb-0">
+          <span class="absolute -left-[7px] top-1.5 size-3 rounded-full bg-accent-400 shadow-[0_0_0_4px_rgba(34,211,238,0.18)]"></span>
+          <div class="flex flex-wrap items-baseline justify-between gap-3">
+            <h3 class="font-display text-xl font-semibold text-mist-100">
+              {e.company} <span class="text-mist-400">·</span> <span class="text-mist-300">{e.role}</span>
+            </h3>
+            <span class="text-sm text-mist-400">{e.when}</span>
+          </div>
+          <div class="mt-1 text-sm text-mist-400">{e.where}</div>
+          <ul class="mt-4 space-y-2 text-mist-300">
+            {e.points.map((pt) => (
+              <li class="flex gap-3">
+                <span class="mt-2 inline-block size-1 shrink-0 rounded-full bg-accent-400"></span>
+                <span>{pt}</span>
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

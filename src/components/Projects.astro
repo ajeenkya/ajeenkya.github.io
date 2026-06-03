@@ -1,0 +1,40 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import { projects } from '../data/site';
+---
+<section id="work" class="relative py-32">
+  <div class="mx-auto max-w-6xl px-6">
+    <SectionHeader
+      eyebrow="Featured work"
+      title="Product-grade systems. Measured impact."
+      lede="Selected projects from identity, trust, ML, and indie AI products."
+    />
+    <div class="mt-16 grid gap-6 md:grid-cols-2">
+      {projects.map((p, i) => (
+        <article class={`reveal glass group relative overflow-hidden rounded-3xl p-8 transition-all duration-500 hover:-translate-y-1 hover:glow-ring ${i === 0 ? 'md:col-span-2' : ''}`}>
+          <div
+            class="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full opacity-0 blur-3xl transition-opacity duration-700 group-hover:opacity-100"
+            style="background: radial-gradient(closest-side, rgba(34,211,238,0.35), transparent 70%);"
+            aria-hidden="true"
+          ></div>
+          <div class="relative">
+            <span class="text-xs uppercase tracking-[0.25em] text-accent-400">{p.tag}</span>
+            <h3 class="font-display mt-3 text-2xl font-semibold text-mist-100 sm:text-3xl">{p.title}</h3>
+            <p class="mt-4 max-w-2xl text-mist-300">{p.blurb}</p>
+
+            <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {p.metrics.map((m) => (
+                <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4">
+                  <div class="font-display text-xl font-semibold text-mist-100">{m.v}</div>
+                  <div class="mt-1 text-xs uppercase tracking-wider text-mist-400">{m.l}</div>
+                </div>
+              ))}
+            </div>
+
+            {p.note && <p class="mt-6 text-sm italic text-mist-400">{p.note}</p>}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

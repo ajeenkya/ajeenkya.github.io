@@ -1,0 +1,10 @@
+---
+const { eyebrow, title, lede } = Astro.props as { eyebrow: string; title: string; lede?: string };
+---
+<div class="reveal mx-auto max-w-3xl text-center">
+  <span class="text-xs uppercase tracking-[0.3em] text-accent-400">{eyebrow}</span>
+  <h2 class="font-display mt-4 text-4xl font-semibold leading-tight text-balance text-mist-100 sm:text-5xl">
+    {title}
+  </h2>
+  {lede && <p class="mt-5 text-lg text-mist-300 text-pretty">{lede}</p>}
+</div>

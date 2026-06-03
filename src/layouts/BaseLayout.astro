@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+import { site } from '../data/site';
+
+const { title, description } = Astro.props as { title?: string; description?: string };
+const pageTitle = title ? `${title} · ${site.short}` : site.name;
+const pageDesc = description ?? site.description;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDesc} />
+    <meta name="theme-color" content="#06070a" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDesc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={site.links.github.replace('github.com/ajeenkya', 'ajeenkya.github.io')} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="grain antialiased">
+    <slot />
+    <script>
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.12, rootMargin: '0px 0px -10% 0px' },
+      );
+      document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+
+      // Subtle parallax on elements with [data-parallax]
+      const parallaxEls = document.querySelectorAll<HTMLElement>('[data-parallax]');
+      const onScroll = () => {
+        const y = window.scrollY;
+        for (const el of parallaxEls) {
+          const speed = parseFloat(el.dataset.parallax ?? '0.1');
+          el.style.transform = `translate3d(0, ${y * speed}px, 0)`;
+        }
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    </script>
+  </body>
+</html>

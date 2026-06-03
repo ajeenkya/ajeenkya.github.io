@@ -1,0 +1,30 @@
+---
+import { site } from '../data/site';
+---
+<section id="contact" class="relative py-32">
+  <div class="mx-auto max-w-4xl px-6">
+    <div class="reveal glass relative overflow-hidden rounded-[2rem] p-12 text-center sm:p-16">
+      <div
+        class="pointer-events-none absolute -top-32 left-1/2 size-[480px] -translate-x-1/2 rounded-full opacity-50 blur-3xl"
+        style="background: radial-gradient(closest-side, rgba(34,211,238,0.3), transparent 70%);"
+        aria-hidden="true"
+      ></div>
+      <span class="text-xs uppercase tracking-[0.3em] text-accent-400">Contact</span>
+      <h2 class="font-display mt-4 text-4xl font-semibold leading-tight text-balance text-mist-100 sm:text-5xl">
+        Let's build something.
+      </h2>
+      <p class="mx-auto mt-5 max-w-xl text-mist-300">
+        Open to AI engineering roles, technical-founder collaborations, and advisory conversations on identity, trust, and applied AI.
+      </p>
+      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a href={site.links.email} class="btn-primary">Email me</a>
+        <a href={site.links.linkedin} class="btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
+        <a href={site.links.github} class="btn-ghost" target="_blank" rel="noopener">GitHub</a>
+        <a href={site.links.resume} class="btn-ghost" download>Resume ↓</a>
+      </div>
+    </div>
+    <p class="mt-10 text-center text-sm text-mist-400">
+      © {new Date().getFullYear()} {site.name}. Built with Astro + Tailwind.
+    </p>
+  </div>
+</section>

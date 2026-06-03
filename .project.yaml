@@ -1,0 +1,11 @@
+name: portfolio
+status: active
+owner: aj
+created: 2026-06-03
+deploy:
+  surface: github-pages
+  repo: ajeenkya/ajeenkya.github.io
+  url: https://ajeenkya.github.io
+nav:
+  alias: portfolio
+  what: Personal portfolio site (Astro + Tailwind v4, dark cinematic), deploys to ajeenkya.github.io

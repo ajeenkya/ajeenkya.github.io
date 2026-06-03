@@ -1,0 +1,24 @@
+---
+import SectionHeader from './SectionHeader.astro';
+import { skills } from '../data/site';
+---
+<section id="skills" class="relative py-32">
+  <div class="mx-auto max-w-6xl px-6">
+    <SectionHeader eyebrow="Skills" title="Technical depth across three domains" />
+    <div class="mt-16 grid gap-6 md:grid-cols-3">
+      {skills.map((s) => (
+        <div class="reveal glass rounded-3xl p-8">
+          <h3 class="font-display text-xl font-semibold text-mist-100">{s.domain}</h3>
+          <ul class="mt-6 space-y-3 text-mist-300">
+            {s.items.map((it) => (
+              <li class="flex gap-3">
+                <span class="mt-2 inline-block size-1 shrink-0 rounded-full bg-accent-400"></span>
+                <span>{it}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
