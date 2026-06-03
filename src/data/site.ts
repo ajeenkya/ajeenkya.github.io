@@ -9,7 +9,7 @@ export const site = {
     'Open to Head of Engineering, Founding Engineer, and Engineer-in-Residence roles at AI-native startups and venture studios.',
   links: {
     github: 'https://github.com/ajeenkya',
-    linkedin: 'https://www.linkedin.com/in/ajeenkya/',
+    linkedin: 'https://www.linkedin.com/in/ajeenkyabhatalkar/',
     email: 'mailto:ajeenkyab@gmail.com',
     resume: '/aj-bhatalkar-resume.pdf',
   },
