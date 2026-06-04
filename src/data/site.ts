@@ -5,8 +5,6 @@ export const site = {
   location: 'San Francisco Bay Area',
   description:
     'Engineering manager turned AI-native builder. Ten years scaling identity, trust, and ML systems at Airbnb and Twitter. Now shipping voice-first agents, LLM orchestration, and indie SaaS as I look for the right zero-to-one team.',
-  status:
-    'Open to Head of Engineering, Founding Engineer, and Engineer-in-Residence roles at AI-native startups and venture studios.',
   links: {
     github: 'https://github.com/ajeenkya',
     linkedin: 'https://www.linkedin.com/in/ajeenkyabhatalkar/',
