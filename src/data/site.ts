@@ -26,7 +26,7 @@ export const projects = [
     blurb:
       'Solo-built and shipped in under 5 days: a five-layer Claude Code operating system (CLAUDE.md, hooks, rules, memory, skills) plus an 8-chapter PDF and starter pack. Designed the architecture, wrote the code, built the landing page, ran paid traffic, and closed the first sales.',
     metrics: [
-      { v: 'Live', l: 'loadout.hellomilo.app' },
+      { v: 'Live', l: 'Public launch' },
       { v: '5', l: 'Composable layers' },
       { v: '3', l: 'Pricing tiers' },
       { v: '<5 days', l: 'Idea to ship' },

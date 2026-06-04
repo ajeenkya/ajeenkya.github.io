@@ -9,9 +9,9 @@ const links = [
   { href: '#contact', label: 'Contact' },
 ];
 ---
-<header class="fixed inset-x-0 top-0 z-50">
-  <div class="mx-auto max-w-6xl px-6 py-4">
-    <nav class="glass flex items-center justify-between rounded-full px-5 py-3">
+<header class="fixed inset-x-0 top-0 z-50" style="padding-top: env(safe-area-inset-top);">
+  <div class="mx-auto max-w-6xl px-4 py-3 sm:px-6 sm:py-4">
+    <nav class="glass flex items-center justify-between rounded-full px-4 py-2.5 sm:px-5 sm:py-3">
       <a href="#top" class="font-display text-sm font-semibold tracking-tight text-mist-100">
         {site.short}<span class="text-accent-400">.</span>
       </a>
@@ -22,7 +22,7 @@ const links = [
           </li>
         ))}
       </ul>
-      <a href={site.links.resume} class="hidden text-sm font-medium text-mist-100 md:inline-flex" download>
+      <a href={site.links.resume} class="inline-flex items-center text-sm font-medium text-mist-100" download>
         Resume <span class="ml-1 text-accent-400">↓</span>
       </a>
     </nav>
