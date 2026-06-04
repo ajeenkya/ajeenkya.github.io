@@ -16,7 +16,7 @@ export const site = {
 export const stats = [
   { value: '10+', label: 'Years shipping', sub: 'Engineering leadership at Airbnb, Twitter, and early-stage startups' },
   { value: '$23.9M', label: 'Annualized impact', sub: 'Identity and trust systems shipped in 2025' },
-  { value: '26 repos', label: 'Shipped solo', sub: 'AI-native projects built in the last 7 months across Claude Code, voice, agents, and indie SaaS' },
+  { value: '<5 days', label: 'Idea to ship', sub: 'Loadout: full-stack AI-native product built end-to-end on the Claude Code OS, public launch May 2026' },
 ];
 
 export const projects = [
@@ -80,9 +80,8 @@ export const experience = [
     where: 'Sunnyvale, CA',
     when: 'Nov 2025 → Present',
     points: [
-      '26 AI-native repos shipped in 7 months on the Claude Code stack.',
-      'Loadout. Claude Code OS guide + starter pack. Designed, shipped, monetized.',
-      'Verso, Glassbox AI, jarvis, pensive, ai-literacy, agent-eng-team and more in active build.',
+      'Loadout. Claude Code OS guide and five-layer starter pack. Solo-built, shipped, and monetized end-to-end in under 5 days.',
+      'Focused build cadence in voice-first AI, agent orchestration, and indie SaaS under the Milo Labs umbrella.',
     ],
   },
   {
@@ -117,7 +116,7 @@ export const skills = [
     domain: 'Zero to One',
     items: [
       'Founding-team execution: product, engineering, GTM in one head',
-      'Shipping solo: Loadout, Verso, Glassbox AI in the last 12 months',
+      'Shipped Loadout solo end-to-end in under 5 days',
       'Speed plus discipline: autonomous gates, ship-readiness checks, doc cascades',
       'Comfortable owning revenue, not just code',
     ],
@@ -145,7 +144,7 @@ export const skills = [
 export const aiStack = [
   { k: 'Voice-first AI', v: 'Hands-free coding loops, TTS pipelines, voice agents that ship.' },
   { k: 'LLM agents', v: 'Multi-agent orchestration, tool use, persistent memory, evals on the same loop.' },
-  { k: 'Indie SaaS', v: 'Loadout, Verso, Glassbox AI. Shipping the AI-native stack as products, not demos.' },
+  { k: 'Indie SaaS', v: 'Loadout shipped end-to-end as a real product, not a demo. Architecture, code, brand, payment rails, deploy.' },
   { k: 'Doc cascades', v: 'Autonomous gates and ship-readiness checks that compound across every project.' },
 ];
 
