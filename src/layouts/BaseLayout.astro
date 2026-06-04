@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { site } from '../data/site';
+import Posthog from '../components/Posthog.astro';
 
 const { title, description } = Astro.props as { title?: string; description?: string };
 const pageTitle = title ? `${title} · ${site.short}` : site.name;
@@ -21,6 +22,7 @@ const pageDesc = description ?? site.description;
     <meta property="og:url" content={site.links.github.replace('github.com/ajeenkya', 'ajeenkya.github.io')} />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <Posthog />
   </head>
   <body class="grain antialiased">
     <slot />
