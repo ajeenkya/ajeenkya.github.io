@@ -1,7 +1,7 @@
 export const site = {
   name: 'Ajeenkya (AJ) Bhatalkar',
   short: 'AJ Bhatalkar',
-  tagline: 'AI Engineer. Operator. Founding-team builder.',
+  tagline: 'Builder.',
   location: 'San Francisco Bay Area',
   description:
     'Engineering manager turned AI-native builder. Ten years scaling identity, trust, and ML systems at Airbnb and Twitter. Now shipping voice-first agents, LLM orchestration, and indie SaaS as I look for the right zero-to-one team.',

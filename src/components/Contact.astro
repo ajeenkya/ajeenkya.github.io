@@ -3,27 +3,7 @@ import { site } from '../data/site';
 ---
 <section id="contact" class="relative py-32">
   <div class="mx-auto max-w-4xl px-6">
-    <div class="reveal glass relative overflow-hidden rounded-[2rem] p-12 text-center sm:p-16">
-      <div
-        class="pointer-events-none absolute -top-32 left-1/2 size-[480px] -translate-x-1/2 rounded-full opacity-50 blur-3xl"
-        style="background: radial-gradient(closest-side, rgba(34,211,238,0.3), transparent 70%);"
-        aria-hidden="true"
-      ></div>
-      <span class="text-xs uppercase tracking-[0.3em] text-accent-400">Let's build</span>
-      <h2 class="font-display mt-4 text-4xl font-semibold leading-tight text-balance text-mist-100 sm:text-5xl">
-        Hiring for a founding seat?
-      </h2>
-      <p class="mx-auto mt-5 max-w-xl text-mist-300">
-        AI Fund, venture studios, AI-native startups, technical-founder collaborations. Reach out. Fastest reply on email or LinkedIn.
-      </p>
-      <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
-        <a href={site.links.email} class="btn-primary" data-track="cta_email_contact">Email me</a>
-        <a href={site.links.linkedin} class="btn-ghost" target="_blank" rel="noopener" data-track="cta_linkedin_contact">LinkedIn</a>
-        <a href={site.links.github} class="btn-ghost" target="_blank" rel="noopener" data-track="cta_github_contact">GitHub</a>
-        <a href={site.links.resume} class="btn-ghost" download data-track="cta_resume_contact">Resume ↓</a>
-      </div>
-    </div>
-    <p class="mt-10 text-center text-sm text-mist-400">
+    <p class="text-center text-sm text-mist-400">
       © {new Date().getFullYear()} {site.name}. Built with Astro + Tailwind.
     </p>
   </div>

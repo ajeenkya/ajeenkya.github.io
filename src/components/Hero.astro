@@ -12,16 +12,13 @@ import { site, stats } from '../data/site';
   <div class="relative mx-auto max-w-6xl px-6">
     <div class="reveal max-w-3xl">
       <h1 class="font-display text-5xl font-semibold leading-[1.02] text-balance text-mist-100 sm:text-6xl md:text-7xl">
-        <span class="gradient-text">AI engineer.</span><br />
-        Operator.<br />
-        Founding-team builder.
+        <span class="gradient-text">Builder.</span>
       </h1>
       <p class="mt-8 max-w-2xl text-lg text-mist-300 text-pretty">
         {site.description}
       </p>
       <div class="mt-10 flex flex-wrap items-center gap-3">
-        <a href="#contact" class="btn-primary" data-track="cta_contact_hero">Get in touch</a>
-        <a href={site.links.resume} class="btn-ghost" download data-track="cta_resume_hero">
+        <a href={site.links.resume} class="btn-primary" download data-track="cta_resume_hero">
           Download resume <span class="text-accent-400">↓</span>
         </a>
         <a href={site.links.github} class="btn-ghost" target="_blank" rel="noopener" data-track="cta_github_hero">GitHub</a>
