@@ -1,0 +1,228 @@
+---
+const animations = {
+  idle:     '/milo/idle.lottie',
+  wink:     '/milo/wink.lottie',
+  excited:  '/milo/excited.lottie',
+  typing:   '/milo/typing.lottie',
+  crazy:    '/milo/crazy.lottie',
+  heart:    '/milo/heart.lottie',
+  laughing: '/milo/laughing.lottie',
+};
+---
+<div
+  id="milo-companion"
+  class="milo-companion"
+  role="img"
+  aria-label="Milo, a friendly little robot companion"
+  data-anims={JSON.stringify(animations)}
+>
+  <div class="milo-shadow" aria-hidden="true"></div>
+  <canvas id="milo-canvas" width="128" height="128"></canvas>
+  <span class="milo-hint" aria-hidden="true">hi</span>
+</div>
+
+<style>
+  .milo-companion {
+    position: fixed;
+    right: clamp(0.75rem, 3vw, 2rem);
+    top: 50%;
+    width: 72px;
+    height: 72px;
+    z-index: 40;
+    pointer-events: auto;
+    cursor: pointer;
+    transform: translate3d(0, 0, 0) scale(1);
+    transition: filter 220ms ease;
+    will-change: transform;
+    filter: drop-shadow(0 8px 20px rgba(34, 211, 238, 0.18));
+  }
+
+  @media (max-width: 640px) {
+    .milo-companion { width: 56px; height: 56px; right: 0.6rem; }
+  }
+
+  .milo-companion canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .milo-shadow {
+    position: absolute;
+    inset: -18% -18% -18% -18%;
+    border-radius: 9999px;
+    background: radial-gradient(closest-side, rgba(34,211,238,0.22), rgba(34,211,238,0) 70%);
+    opacity: 0.9;
+    pointer-events: none;
+    animation: milo-breathe 4.2s ease-in-out infinite;
+  }
+
+  .milo-hint {
+    position: absolute;
+    left: -34px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(186, 230, 253, 0.75);
+    opacity: 0;
+    transition: opacity 240ms ease, transform 240ms ease;
+  }
+
+  .milo-companion:hover .milo-hint { opacity: 1; transform: translate(-4px, -50%); }
+
+  @keyframes milo-breathe {
+    0%, 100% { transform: scale(0.92); opacity: 0.55; }
+    50%      { transform: scale(1.08); opacity: 0.95; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .milo-shadow { animation: none; }
+    .milo-companion { transition: none; }
+  }
+</style>
+
+<script type="module">
+  import { DotLottie } from 'https://esm.sh/@lottiefiles/dotlottie-web@0.40.0';
+
+  const el = document.getElementById('milo-companion');
+  const canvas = document.getElementById('milo-canvas');
+  if (!el || !canvas) {
+    // bail silently
+  } else {
+    const anims = JSON.parse(el.dataset.anims);
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // dotLottie player
+    let player = new DotLottie({
+      canvas,
+      src: anims.idle,
+      loop: true,
+      autoplay: true,
+    });
+
+    let currentKey = 'idle';
+    let switching = false;
+    function swap(key) {
+      if (!anims[key] || key === currentKey || switching) return;
+      switching = true;
+      currentKey = key;
+      // pulse
+      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, '') + ' scale(1.18)';
+      setTimeout(() => {
+        el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, '') + ' scale(1)';
+      }, 260);
+      try {
+        player.load({ src: anims[key], loop: true, autoplay: true });
+      } catch (e) {
+        // recreate on failure
+        try { player.destroy(); } catch {}
+        player = new DotLottie({ canvas, src: anims[key], loop: true, autoplay: true });
+      }
+      setTimeout(() => { switching = false; }, 320);
+    }
+
+    // ---- scroll-lag spring ----
+    // Milo's target y = viewport center, but we lerp toward it with damping so he
+    // visibly trails when you fling-scroll. Pure transform; no layout thrash.
+    const baseTopFraction = 0.42; // a touch above center reads as "looking down"
+    let targetY = window.innerHeight * baseTopFraction;
+    let currentY = targetY;
+    let scrollVel = 0;
+    let lastScroll = window.scrollY;
+    let tilt = 0;
+    let targetTilt = 0;
+
+    function onScroll() {
+      const now = window.scrollY;
+      scrollVel = now - lastScroll;
+      lastScroll = now;
+      // lag him in the opposite direction of scroll, capped
+      const lagPx = Math.max(-60, Math.min(60, scrollVel * 0.9));
+      targetY = window.innerHeight * baseTopFraction + lagPx;
+      // rotate slightly with velocity for "tipping forward as we go" feel
+      targetTilt = Math.max(-14, Math.min(14, scrollVel * 0.5));
+    }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => { targetY = window.innerHeight * baseTopFraction; }, { passive: true });
+
+    function tick() {
+      // critical damping vibe
+      currentY += (targetY - currentY) * 0.12;
+      tilt += (targetTilt - tilt) * 0.18;
+      // bleed off velocity-driven targets toward rest
+      targetY += (window.innerHeight * baseTopFraction - targetY) * 0.06;
+      targetTilt += (0 - targetTilt) * 0.10;
+
+      el.style.top = '0px';
+      el.style.transform = `translate3d(0, ${currentY}px, 0) rotate(${tilt.toFixed(2)}deg)`;
+
+      requestAnimationFrame(tick);
+    }
+    if (!reduceMotion) {
+      requestAnimationFrame(tick);
+    } else {
+      el.style.top = '50%';
+      el.style.transform = 'translateY(-50%)';
+    }
+
+    // ---- section-aware animation swap ----
+    const sectionMap = {
+      top:        'idle',
+      about:      'wink',
+      work:       'excited',
+      experience: 'typing',
+      skills:     'crazy',
+      ai:         'heart',
+    };
+    const sections = Object.keys(sectionMap)
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+
+    if ('IntersectionObserver' in window && sections.length) {
+      const io = new IntersectionObserver((entries) => {
+        // pick the most-visible entry
+        let best = null;
+        for (const e of entries) {
+          if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e;
+        }
+        if (best) {
+          const key = sectionMap[best.target.id];
+          if (key) swap(key);
+        }
+      }, { threshold: [0.35, 0.6] });
+      sections.forEach(s => io.observe(s));
+    }
+
+    // ---- click reaction ----
+    let clicks = 0;
+    el.addEventListener('click', () => {
+      clicks++;
+      const reactions = ['heart', 'laughing', 'crazy', 'wink'];
+      swap(reactions[clicks % reactions.length]);
+      // return to idle-ish after a beat
+      setTimeout(() => {
+        // resume whichever section we are in
+        const y = window.scrollY + window.innerHeight / 2;
+        let nearest = sections[0];
+        let bestDist = Infinity;
+        for (const s of sections) {
+          const r = s.getBoundingClientRect();
+          const mid = r.top + window.scrollY + r.height / 2;
+          const d = Math.abs(mid - y);
+          if (d < bestDist) { bestDist = d; nearest = s; }
+        }
+        if (nearest) swap(sectionMap[nearest.id] || 'idle');
+      }, 2600);
+    });
+
+    // ---- end-of-page treat ----
+    let firedEnd = false;
+    window.addEventListener('scroll', () => {
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 80;
+      if (nearBottom && !firedEnd) { firedEnd = true; swap('laughing'); }
+      if (!nearBottom) firedEnd = false;
+    }, { passive: true });
+  }
+</script>
