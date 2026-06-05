@@ -20,6 +20,11 @@ const animations = {
   <div class="milo-shadow" aria-hidden="true"></div>
   <canvas id="milo-canvas" width="128" height="128"></canvas>
   <span class="milo-hint" aria-hidden="true">hellomilo.app</span>
+  <div id="milo-bubble" class="milo-bubble" role="status" aria-live="polite">
+    <span class="milo-bubble-from">hi from AJ</span>
+    <span class="milo-bubble-sep">:</span>
+    <span class="milo-bubble-msg">hi</span>
+  </div>
 </div>
 <canvas id="milo-sparkles" aria-hidden="true"></canvas>
 
@@ -78,6 +83,66 @@ const animations = {
   }
 
   .milo-companion:hover .milo-hint { opacity: 1; transform: translate(-50%, -3px); }
+
+  .milo-bubble {
+    position: absolute;
+    right: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%) translateX(8px) scale(0.92);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(8, 47, 73, 0.96));
+    color: rgba(224, 242, 254, 0.96);
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    box-shadow: 0 12px 28px rgba(34, 211, 238, 0.18), 0 0 0 4px rgba(34, 211, 238, 0.08);
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 280ms ease, transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .milo-bubble::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    background: rgba(8, 47, 73, 0.96);
+    border-right: 1px solid rgba(34, 211, 238, 0.35);
+    border-top: 1px solid rgba(34, 211, 238, 0.35);
+    transform: translateY(-50%) rotate(45deg);
+  }
+  .milo-bubble.is-visible {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0) scale(1);
+  }
+  .milo-bubble-from { color: rgba(125, 211, 252, 0.92); font-weight: 600; }
+  .milo-bubble-sep  { color: rgba(125, 211, 252, 0.5); }
+  .milo-bubble-msg  { color: rgba(255, 255, 255, 0.95); }
+
+  @media (max-width: 480px) {
+    .milo-bubble {
+      right: auto;
+      left: 50%;
+      top: calc(100% + 12px);
+      transform: translateX(-50%) translateY(-8px) scale(0.92);
+    }
+    .milo-bubble::after {
+      right: auto; left: 50%; top: -5px;
+      transform: translateX(-50%) rotate(45deg);
+      border: 1px solid rgba(34, 211, 238, 0.35);
+      border-bottom: none;
+      border-right: none;
+    }
+    .milo-bubble.is-visible {
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
 
   #milo-sparkles {
     position: fixed;
@@ -220,8 +285,10 @@ const animations = {
 
     let tilt = 0;
     let pulseScale = 1;
+    let parked = false; // hoisted: flyToNewSpot bails when true
 
     function flyToNewSpot() {
+      if (parked) return;
       const now = performance.now();
       if (now - lastTeleportAt < MIN_INTERVAL) return;
       lastTeleportAt = now;
@@ -412,11 +479,11 @@ const animations = {
     }
 
     // ---- click: heart-burst sparkles + open hellomilo.app ----
+    const RETURN_FLAG = 'milo_clicked_to_hellomilo';
     el.addEventListener('click', (ev) => {
       ev.preventDefault();
       swap('heart');
       pulseScale = 1.28;
-      // confetti-ish burst
       for (let i = 0; i < 18; i++) {
         const ang = Math.random() * Math.PI * 2;
         const spd = 1.2 + Math.random() * 2.4;
@@ -430,11 +497,70 @@ const animations = {
           hue: 188 + Math.random() * 50,
         });
       }
-      // give the burst a beat to register, then open
+      try { sessionStorage.setItem(RETURN_FLAG, String(Date.now())); } catch {}
       setTimeout(() => {
         window.open('https://hellomilo.app', '_blank', 'noopener,noreferrer');
       }, 180);
     });
+
+    // ---- return-from-hellomilo greeting ----
+    // When the user comes back to the portfolio after clicking Milo, park
+    // him in the bottom-right corner and show a tiny "hi from AJ: hi" bubble.
+    const bubble = document.getElementById('milo-bubble');
+    let parkX = 0, parkY = 0;
+    let bubbleTimer = null;
+
+    function parkInCorner() {
+      const margin = isSmall ? 22 : 36;
+      parkX = vw - edgePad - miloRadius - margin;
+      parkY = vh - botPad - margin;
+      // override pickSpot result: force target to corner immediately
+      startX = curX; startY = curY;
+      targetX = parkX; targetY = parkY;
+      flightStart = performance.now();
+      const d = Math.hypot(parkX - curX, parkY - curY);
+      flightDur = Math.max(650, Math.min(1100, 380 + d * 0.9));
+      arcSign = -1; // bow upward as he lands
+      tilt = Math.max(-18, Math.min(18, (parkX - curX) * 0.04));
+      parked = true;
+      swap('wink');
+    }
+
+    function showGreeting() {
+      if (!bubble) return;
+      parkInCorner();
+      // wait until the flight settles a beat before showing the bubble
+      setTimeout(() => bubble.classList.add('is-visible'), 700);
+      clearTimeout(bubbleTimer);
+      bubbleTimer = setTimeout(() => {
+        bubble.classList.remove('is-visible');
+        // release park so scroll-teleport resumes
+        setTimeout(() => { parked = false; }, 400);
+      }, 6000);
+    }
+
+    function checkReturnFlag() {
+      let stamp;
+      try { stamp = sessionStorage.getItem(RETURN_FLAG); } catch {}
+      if (!stamp) return;
+      // only honor for ~30 minutes so a stale flag from days ago doesn't fire
+      if (Date.now() - Number(stamp) > 30 * 60 * 1000) {
+        try { sessionStorage.removeItem(RETURN_FLAG); } catch {}
+        return;
+      }
+      try { sessionStorage.removeItem(RETURN_FLAG); } catch {}
+      // delay slightly so the page has painted and Milo has a starting pos
+      setTimeout(showGreeting, 400);
+    }
+
+    // Fire on (a) initial load if the tab was the same one that clicked,
+    // and (b) visibilitychange when the user tabs back from the new-tab open.
+    if (document.visibilityState === 'visible') checkReturnFlag();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') checkReturnFlag();
+    });
+
+    // (flyToNewSpot already checks `parked` and bails)
 
     // ---- end-of-page treat ----
     let firedEnd = false;
