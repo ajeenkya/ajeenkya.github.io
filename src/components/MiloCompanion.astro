@@ -127,61 +127,87 @@ const animations = {
     }
 
     // ---- pixie motion model ----
-    // Two layers combined:
-    //  (a) anchor: a "home" position relative to the viewport that gently
-    //      drifts in a figure-8 around the right side; scroll velocity tugs
-    //      it like a kite tail.
-    //  (b) wing-flutter: high-frequency tiny noise on top, so even when
-    //      stationary, Milo never sits still.
+    // Milo picks a fresh random spot every time the user scrolls past a
+    // threshold and flies there with eased easing + arc. Between flights he
+    // sits with a very slow gentle bob; no high-frequency vibration.
     const isSmall = window.matchMedia('(max-width: 640px)').matches;
-    const edgePad = isSmall ? 44 : 64;
+    const edgePad = isSmall ? 36 : 56;
+    const topPad = isSmall ? 80 : 110; // stay below nav
+    const botPad = isSmall ? 80 : 96;
 
     let vw = window.innerWidth;
     let vh = window.innerHeight;
-    let anchorX = vw - edgePad;
-    let anchorY = vh * 0.5;
 
-    // current rendered position (what we lerp toward the anchor)
-    let curX = anchorX;
-    let curY = anchorY;
+    function pickSpot(preferSide) {
+      // pick a random spot in the viewport with edge padding. Slight bias
+      // toward the sides so he doesn't constantly land over the centerline
+      // of copy. preferSide alternates so consecutive landings are visually
+      // spread out.
+      const sideBias = preferSide === 'left'
+        ? Math.random() * 0.45
+        : 0.55 + Math.random() * 0.45;
+      const x = edgePad + sideBias * (vw - edgePad * 2);
+      const y = topPad + Math.random() * (vh - topPad - botPad);
+      return { x, y };
+    }
 
-    // wing-flutter offsets (small fast osc)
-    let flutterPhase = Math.random() * Math.PI * 2;
+    // current rendered position
+    let curX = vw - edgePad;
+    let curY = vh * 0.5;
+    // start/end of current flight + timing
+    let startX = curX, startY = curY;
+    let targetX = curX, targetY = curY;
+    let flightStart = 0;
+    let flightDur = 0;
+    let arcSign = 1; // alternates so arc bows up or down
+    let lastSide = 'right';
+    let bobPhase = Math.random() * Math.PI * 2;
 
-    // figure-8 idle drift (slow)
-    let driftT = Math.random() * 1000;
+    // scroll trigger: accumulate scroll delta, fire teleport when it crosses threshold
+    let scrollAccum = 0;
+    let lastScrollY = window.scrollY;
+    let lastTeleportAt = 0;
+    const SCROLL_THRESHOLD = isSmall ? 180 : 260; // px scrolled before re-pick
+    const MIN_INTERVAL = 700; // ms minimum between flights, so fling-scrolls don't strobe
 
-    // scroll-velocity lag and tilt
-    let scrollVel = 0;
-    let lastScroll = window.scrollY;
     let tilt = 0;
-    let targetTilt = 0;
-    let pulseScale = 1; // decays back to 1
+    let pulseScale = 1;
 
-    // pointer attraction (gentle approach, never overlap)
-    let pointerX = -9999, pointerY = -9999;
-    let pointerActive = false;
-    window.addEventListener('pointermove', (e) => {
-      pointerX = e.clientX; pointerY = e.clientY;
-      pointerActive = true;
-    }, { passive: true });
-    window.addEventListener('pointerleave', () => { pointerActive = false; });
+    function flyToNewSpot() {
+      const now = performance.now();
+      if (now - lastTeleportAt < MIN_INTERVAL) return;
+      lastTeleportAt = now;
+      lastSide = lastSide === 'right' ? 'left' : 'right';
+      const spot = pickSpot(lastSide);
+      // don't bother if the new spot is basically the same as current
+      const dx = spot.x - curX, dy = spot.y - curY;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 60) return;
+      startX = curX; startY = curY;
+      targetX = spot.x; targetY = spot.y;
+      flightStart = now;
+      // flight time scales with distance, bounded
+      flightDur = Math.max(620, Math.min(1100, 380 + dist * 0.9));
+      arcSign = (Math.random() < 0.5 ? -1 : 1);
+      // tilt in the direction of flight
+      tilt = Math.max(-18, Math.min(18, dx * 0.04));
+    }
 
-    function recompAnchor() {
+    function recompViewport() {
       vw = window.innerWidth;
       vh = window.innerHeight;
-      anchorX = vw - edgePad;
-      anchorY = vh * 0.5;
     }
-    window.addEventListener('resize', recompAnchor, { passive: true });
+    window.addEventListener('resize', recompViewport, { passive: true });
 
-    function onScroll() {
+    window.addEventListener('scroll', () => {
       const now = window.scrollY;
-      scrollVel = now - lastScroll;
-      lastScroll = now;
-      targetTilt = Math.max(-16, Math.min(16, scrollVel * 0.5));
-    }
-    window.addEventListener('scroll', onScroll, { passive: true });
+      scrollAccum += Math.abs(now - lastScrollY);
+      lastScrollY = now;
+      if (scrollAccum >= SCROLL_THRESHOLD) {
+        scrollAccum = 0;
+        flyToNewSpot();
+      }
+    }, { passive: true });
 
     // ---- sparkle trail (canvas) ----
     let sctx = null;
@@ -246,73 +272,68 @@ const animations = {
     }
 
     // ---- main loop ----
+    // easeInOutCubic for the flight curve
+    function easeInOut(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
     let prevTime = performance.now();
     let prevX = curX, prevY = curY;
     function tick(now) {
       const dt = Math.min(48, now - prevTime);
       prevTime = now;
 
-      // (a) anchor drift: gentle figure-8 around the right edge
-      driftT += dt * 0.0007;
-      const driftX = Math.sin(driftT * 1.0) * (isSmall ? 16 : 26);
-      const driftY = Math.sin(driftT * 2.0) * (isSmall ? 14 : 22);
+      bobPhase += dt * 0.0018; // very slow
 
-      // scroll-lag pulls Milo opposite scroll direction, bleeds away fast
-      const lagY = Math.max(-70, Math.min(70, scrollVel * 0.9));
-      scrollVel *= 0.86;
-
-      let targetX = anchorX + driftX;
-      let targetY = anchorY + driftY + lagY;
-
-      // pointer attraction: drift toward cursor when within ~280px
-      if (pointerActive) {
-        const dx = pointerX - curX;
-        const dy = pointerY - curY;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 280 && dist > 40) {
-          const pull = (1 - dist / 280) * 0.35;
-          targetX += dx * pull;
-          targetY += dy * pull;
-        } else if (dist <= 40) {
-          // shy: nudge away the last few pixels so we never overlap pointer
-          targetX -= dx * 0.6;
-          targetY -= dy * 0.6;
-        }
+      const inFlight = now - flightStart < flightDur;
+      if (inFlight) {
+        const t = (now - flightStart) / flightDur;
+        const e = easeInOut(t);
+        // arc: bow perpendicular to the path so flight feels like a swoop, not a line
+        const dx = targetX - startX;
+        const dy = targetY - startY;
+        const dist = Math.hypot(dx, dy) || 1;
+        // perpendicular unit
+        const px = -dy / dist;
+        const py = dx / dist;
+        const arcAmt = Math.sin(t * Math.PI) * Math.min(80, dist * 0.25) * arcSign;
+        curX = startX + dx * e + px * arcAmt;
+        curY = startY + dy * e + py * arcAmt;
+        // tilt decays from launch tilt toward 0 over the flight
+        tilt *= 0.96;
+      } else {
+        // settled: very gentle low-amplitude bob, not vibration
+        const bobX = Math.sin(bobPhase * 0.9) * 3;
+        const bobY = Math.sin(bobPhase * 1.3) * 4;
+        // lerp toward target+bob so the settle is smooth
+        const sx = targetX + bobX;
+        const sy = targetY + bobY;
+        curX += (sx - curX) * 0.06;
+        curY += (sy - curY) * 0.06;
+        tilt += (0 - tilt) * 0.08;
       }
 
-      // (b) wing-flutter: tiny fast wobble
-      flutterPhase += dt * 0.022;
-      const flutterY = Math.sin(flutterPhase * 4.0) * 1.6 + Math.sin(flutterPhase * 7.0) * 0.8;
-      const flutterX = Math.cos(flutterPhase * 3.0) * 1.2;
-
-      // critical-damp lerp toward target
-      curX += (targetX - curX) * 0.10;
-      curY += (targetY - curY) * 0.12;
-
-      // tilt eases toward scroll target then decays
-      tilt += (targetTilt - tilt) * 0.18;
-      targetTilt *= 0.88;
-
-      // pulse decay
+      // pulse decay (used by swap() and click)
       pulseScale += (1 - pulseScale) * 0.10;
 
-      const renderX = curX + flutterX;
-      const renderY = curY + flutterY;
+      el.style.transform = `translate3d(${curX.toFixed(2)}px, ${curY.toFixed(2)}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${pulseScale.toFixed(3)})`;
 
-      el.style.transform = `translate3d(${renderX.toFixed(2)}px, ${renderY.toFixed(2)}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${pulseScale.toFixed(3)})`;
-
-      // sparkle trail proportional to actual movement
-      const moved = Math.hypot(renderX - prevX, renderY - prevY);
-      if (moved > 0.6) emitSparkle(renderX, renderY, moved);
-      prevX = renderX; prevY = renderY;
+      // sparkle trail only while in flight (settle is quiet)
+      const moved = Math.hypot(curX - prevX, curY - prevY);
+      if (inFlight && moved > 0.6) emitSparkle(curX, curY, moved);
+      prevX = curX; prevY = curY;
 
       renderSparkles(dt);
       requestAnimationFrame(tick);
     }
     if (!reduceMotion) {
+      // pick a tasteful starting spot
+      const first = pickSpot('right');
+      curX = startX = targetX = first.x;
+      curY = startY = targetY = first.y;
       requestAnimationFrame(tick);
     } else {
-      el.style.transform = `translate3d(${anchorX}px, ${anchorY}px, 0)`;
+      el.style.transform = `translate3d(${vw - edgePad}px, ${vh * 0.5}px, 0)`;
     }
 
     // ---- section-aware animation swap ----
