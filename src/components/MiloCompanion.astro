@@ -238,30 +238,77 @@ const animations = {
       return false;
     }
 
+    // Compute the actual horizontal text-content band from visible rects,
+    // then sample x only OUTSIDE that band (left or right gutter). This
+    // guarantees Milo never lands on the content column where text lives.
+    function computeGutters(rects) {
+      let contentL = Infinity, contentR = -Infinity;
+      for (const r of rects) {
+        // ignore very wide rects (page-wide containers) and very narrow ones
+        if (r.width < 20 || r.width > vw * 0.95) continue;
+        if (r.left < contentL) contentL = r.left;
+        if (r.right > contentR) contentR = r.right;
+      }
+      if (!isFinite(contentL) || !isFinite(contentR)) {
+        // no text rects -> the whole viewport is "gutter"
+        return { contentL: vw * 0.5, contentR: vw * 0.5 };
+      }
+      return { contentL, contentR };
+    }
+
     function pickSpot(preferSide) {
       const rects = collectTextRects();
-      // First try random spots biased to the preferred side; reject hits.
-      for (let i = 0; i < 24; i++) {
-        const sideBias = preferSide === 'left'
-          ? Math.random() * 0.45
-          : 0.55 + Math.random() * 0.45;
-        const x = edgePad + miloRadius + sideBias * (vw - (edgePad + miloRadius) * 2);
-        const y = topPad + Math.random() * (vh - topPad - botPad);
-        if (!spotHitsText(x, y, rects)) return { x, y };
-      }
-      // Fallback: scan the side gutters (most likely empty zone outside
-      // centered max-w content columns) for a clean point.
-      const xs = preferSide === 'left'
-        ? [edgePad + miloRadius, vw * 0.08, vw * 0.12]
-        : [vw - edgePad - miloRadius, vw * 0.92, vw * 0.88];
-      for (const x of xs) {
-        for (let i = 0; i < 12; i++) {
+      const { contentL, contentR } = computeGutters(rects);
+      const gutterMargin = 18; // breathing room between Milo and text
+      const minX = edgePad + miloRadius;
+      const maxX = vw - edgePad - miloRadius;
+      const leftMaxX = contentL - gutterMargin - miloRadius;
+      const rightMinX = contentR + gutterMargin + miloRadius;
+      const leftHasRoom = leftMaxX > minX + 4;
+      const rightHasRoom = rightMinX < maxX - 4;
+
+      function trySide(side) {
+        const xRange = side === 'left'
+          ? [minX, leftMaxX]
+          : [rightMinX, maxX];
+        for (let i = 0; i < 18; i++) {
+          const x = xRange[0] + Math.random() * Math.max(0, xRange[1] - xRange[0]);
           const y = topPad + Math.random() * (vh - topPad - botPad);
+          // even within the gutter, double-check no text rect intrudes (some
+          // sections have side-anchored content like nav glass pills)
+          if (!spotHitsText(x, y, rects)) return { x, y };
+        }
+        return null;
+      }
+
+      // First try the preferred side, then the other side.
+      if (preferSide === 'left' && leftHasRoom)  { const s = trySide('left');  if (s) return s; }
+      if (preferSide === 'right' && rightHasRoom) { const s = trySide('right'); if (s) return s; }
+      if (rightHasRoom) { const s = trySide('right'); if (s) return s; }
+      if (leftHasRoom)  { const s = trySide('left');  if (s) return s; }
+
+      // No gutter wide enough (narrow viewport): try the vertical bands
+      // above the highest and below the lowest visible text rect.
+      let topMost = vh, botMost = 0;
+      for (const r of rects) {
+        if (r.top < topMost) topMost = r.top;
+        if (r.bottom > botMost) botMost = r.bottom;
+      }
+      const aboveBand = [topPad, topMost - gutterMargin - miloRadius];
+      const belowBand = [botMost + gutterMargin + miloRadius, vh - botPad];
+      const bands = [];
+      if (aboveBand[1] - aboveBand[0] > 20) bands.push(aboveBand);
+      if (belowBand[1] - belowBand[0] > 20) bands.push(belowBand);
+      for (const [y0, y1] of bands) {
+        for (let i = 0; i < 12; i++) {
+          const x = minX + Math.random() * (maxX - minX);
+          const y = y0 + Math.random() * (y1 - y0);
           if (!spotHitsText(x, y, rects)) return { x, y };
         }
       }
-      // Last resort: top-right corner (always padded away from nav by topPad)
-      return { x: vw - edgePad - miloRadius, y: topPad + 20 };
+
+      // Last resort: top-right corner just under the nav.
+      return { x: maxX, y: topPad + 20 };
     }
 
     // current rendered position
