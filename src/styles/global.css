@@ -133,3 +133,12 @@
     background: rgba(34, 211, 238, 0.06);
   }
 }
+
+/* Stacking: content layer sits above the Milo companion + sparkles,
+   so Milo reads as a background-layer creature drifting behind the copy.
+   Nav (z:50) and chat panel (z:60) stay on top of everything. */
+.content-layer {
+  position: relative;
+  z-index: 10;
+  isolation: isolate;
+}

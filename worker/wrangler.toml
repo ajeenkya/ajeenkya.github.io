@@ -1,0 +1,11 @@
+name = "askaj-chat"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# Set the secret with:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+#
+# Optional: custom domain
+# [[routes]]
+# pattern = "chat.hellomilo.app/*"
+# zone_name = "hellomilo.app"

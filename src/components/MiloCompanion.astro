@@ -37,7 +37,9 @@ const animations = {
     height: 72px;
     margin-left: -36px;
     margin-top: -36px;
-    z-index: 40;
+    z-index: 1; /* below .content-layer (z:10); raised to 55 during greeting */
+    opacity: 0.82; /* recessed-feel since he lives behind content */
+    transition: opacity 220ms ease, z-index 0s linear 220ms;
     pointer-events: auto;
     cursor: pointer;
     transform: translate3d(0, 0, 0);
@@ -150,7 +152,14 @@ const animations = {
     width: 100vw;
     height: 100vh;
     pointer-events: none;
-    z-index: 39;
+    z-index: 0; /* always behind content */
+  }
+
+  /* When greeting bubble is visible, lift Milo above content so bubble reads. */
+  .milo-companion.is-foreground {
+    z-index: 55;
+    opacity: 1;
+    transition: opacity 220ms ease, z-index 0s linear 0s;
   }
 
   @keyframes milo-breathe {
@@ -576,13 +585,16 @@ const animations = {
     function showGreeting() {
       if (!bubble) return;
       parkInCorner();
-      // wait until the flight settles a beat before showing the bubble
+      // Raise above content so the bubble reads
+      el.classList.add('is-foreground');
       setTimeout(() => bubble.classList.add('is-visible'), 700);
       clearTimeout(bubbleTimer);
       bubbleTimer = setTimeout(() => {
         bubble.classList.remove('is-visible');
-        // release park so scroll-teleport resumes
-        setTimeout(() => { parked = false; }, 400);
+        setTimeout(() => {
+          parked = false;
+          el.classList.remove('is-foreground');
+        }, 400);
       }, 6000);
     }
 
