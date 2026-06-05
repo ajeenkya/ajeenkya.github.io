@@ -13,12 +13,13 @@ const animations = {
   id="milo-companion"
   class="milo-companion"
   role="img"
-  aria-label="Milo, a friendly little pixie companion"
+  aria-label="Milo: visit hellomilo.app"
+  title="Visit hellomilo.app"
   data-anims={JSON.stringify(animations)}
 >
   <div class="milo-shadow" aria-hidden="true"></div>
   <canvas id="milo-canvas" width="128" height="128"></canvas>
-  <span class="milo-hint" aria-hidden="true">hi</span>
+  <span class="milo-hint" aria-hidden="true">hellomilo.app</span>
 </div>
 <canvas id="milo-sparkles" aria-hidden="true"></canvas>
 
@@ -62,20 +63,21 @@ const animations = {
 
   .milo-hint {
     position: absolute;
-    left: -36px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 10px;
+    left: 50%;
+    bottom: -22px;
+    transform: translateX(-50%);
+    font-size: 9.5px;
     letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: rgba(186, 230, 253, 0.8);
+    text-transform: lowercase;
+    color: rgba(186, 230, 253, 0.85);
     opacity: 0;
     transition: opacity 240ms ease, transform 240ms ease;
     pointer-events: none;
     white-space: nowrap;
+    text-shadow: 0 1px 8px rgba(8, 47, 73, 0.7);
   }
 
-  .milo-companion:hover .milo-hint { opacity: 1; transform: translate(-4px, -50%); }
+  .milo-companion:hover .milo-hint { opacity: 1; transform: translate(-50%, -3px); }
 
   #milo-sparkles {
     position: fixed;
@@ -138,17 +140,63 @@ const animations = {
     let vw = window.innerWidth;
     let vh = window.innerHeight;
 
+    // Half-size of Milo's bounding box plus a comfort margin, so the
+    // collision test treats him as a circle a little larger than the canvas.
+    const miloRadius = (isSmall ? 28 : 36) + 10;
+
+    // Collect every text-bearing rect currently in the viewport. Cheap enough
+    // to redo per teleport (<100 elements typical, sub-millisecond).
+    const TEXT_SELECTOR = 'h1,h2,h3,h4,h5,h6,p,li,a,button,blockquote,figcaption,label,strong,em,span.gradient-text';
+    function collectTextRects() {
+      const rects = [];
+      const nodes = document.querySelectorAll(TEXT_SELECTOR);
+      for (const n of nodes) {
+        // skip our own UI
+        if (n.closest('#milo-companion')) continue;
+        const r = n.getBoundingClientRect();
+        // only rects with actual text content and visible in viewport
+        if (r.width < 4 || r.height < 4) continue;
+        if (r.bottom < 0 || r.top > vh || r.right < 0 || r.left > vw) continue;
+        if (!n.textContent || !n.textContent.trim()) continue;
+        rects.push(r);
+      }
+      return rects;
+    }
+
+    function spotHitsText(x, y, rects) {
+      for (const r of rects) {
+        // distance from point to rect; if <= miloRadius, collision
+        const dx = Math.max(r.left - x, 0, x - r.right);
+        const dy = Math.max(r.top - y, 0, y - r.bottom);
+        if (dx * dx + dy * dy < miloRadius * miloRadius) return true;
+      }
+      return false;
+    }
+
     function pickSpot(preferSide) {
-      // pick a random spot in the viewport with edge padding. Slight bias
-      // toward the sides so he doesn't constantly land over the centerline
-      // of copy. preferSide alternates so consecutive landings are visually
-      // spread out.
-      const sideBias = preferSide === 'left'
-        ? Math.random() * 0.45
-        : 0.55 + Math.random() * 0.45;
-      const x = edgePad + sideBias * (vw - edgePad * 2);
-      const y = topPad + Math.random() * (vh - topPad - botPad);
-      return { x, y };
+      const rects = collectTextRects();
+      // First try random spots biased to the preferred side; reject hits.
+      for (let i = 0; i < 24; i++) {
+        const sideBias = preferSide === 'left'
+          ? Math.random() * 0.45
+          : 0.55 + Math.random() * 0.45;
+        const x = edgePad + miloRadius + sideBias * (vw - (edgePad + miloRadius) * 2);
+        const y = topPad + Math.random() * (vh - topPad - botPad);
+        if (!spotHitsText(x, y, rects)) return { x, y };
+      }
+      // Fallback: scan the side gutters (most likely empty zone outside
+      // centered max-w content columns) for a clean point.
+      const xs = preferSide === 'left'
+        ? [edgePad + miloRadius, vw * 0.08, vw * 0.12]
+        : [vw - edgePad - miloRadius, vw * 0.92, vw * 0.88];
+      for (const x of xs) {
+        for (let i = 0; i < 12; i++) {
+          const y = topPad + Math.random() * (vh - topPad - botPad);
+          if (!spotHitsText(x, y, rects)) return { x, y };
+        }
+      }
+      // Last resort: top-right corner (always padded away from nav by topPad)
+      return { x: vw - edgePad - miloRadius, y: topPad + 20 };
     }
 
     // current rendered position
@@ -363,16 +411,15 @@ const animations = {
       sections.forEach(s => io.observe(s));
     }
 
-    // ---- click reaction: burst of sparkles + cycle reaction ----
-    let clicks = 0;
-    el.addEventListener('click', () => {
-      clicks++;
-      const reactions = ['heart', 'laughing', 'crazy', 'wink'];
-      swap(reactions[clicks % reactions.length]);
+    // ---- click: heart-burst sparkles + open hellomilo.app ----
+    el.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      swap('heart');
+      pulseScale = 1.28;
       // confetti-ish burst
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < 18; i++) {
         const ang = Math.random() * Math.PI * 2;
-        const spd = 1 + Math.random() * 2.2;
+        const spd = 1.2 + Math.random() * 2.4;
         sparkles.push({
           x: curX, y: curY,
           vx: Math.cos(ang) * spd,
@@ -383,18 +430,10 @@ const animations = {
           hue: 188 + Math.random() * 50,
         });
       }
+      // give the burst a beat to register, then open
       setTimeout(() => {
-        const y = window.scrollY + window.innerHeight / 2;
-        let nearest = sections[0];
-        let bestDist = Infinity;
-        for (const s of sections) {
-          const r = s.getBoundingClientRect();
-          const mid = r.top + window.scrollY + r.height / 2;
-          const d = Math.abs(mid - y);
-          if (d < bestDist) { bestDist = d; nearest = s; }
-        }
-        if (nearest) swap(sectionMap[nearest.id] || 'idle');
-      }, 2600);
+        window.open('https://hellomilo.app', '_blank', 'noopener,noreferrer');
+      }, 180);
     });
 
     // ---- end-of-page treat ----
