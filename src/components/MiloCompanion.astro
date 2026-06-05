@@ -13,32 +13,35 @@ const animations = {
   id="milo-companion"
   class="milo-companion"
   role="img"
-  aria-label="Milo, a friendly little robot companion"
+  aria-label="Milo, a friendly little pixie companion"
   data-anims={JSON.stringify(animations)}
 >
   <div class="milo-shadow" aria-hidden="true"></div>
   <canvas id="milo-canvas" width="128" height="128"></canvas>
   <span class="milo-hint" aria-hidden="true">hi</span>
 </div>
+<canvas id="milo-sparkles" aria-hidden="true"></canvas>
 
 <style>
   .milo-companion {
     position: fixed;
-    right: clamp(0.75rem, 3vw, 2rem);
-    top: 50%;
+    left: 0;
+    top: 0;
     width: 72px;
     height: 72px;
+    margin-left: -36px;
+    margin-top: -36px;
     z-index: 40;
     pointer-events: auto;
     cursor: pointer;
-    transform: translate3d(0, 0, 0) scale(1);
-    transition: filter 220ms ease;
+    transform: translate3d(0, 0, 0);
     will-change: transform;
-    filter: drop-shadow(0 8px 20px rgba(34, 211, 238, 0.18));
+    filter: drop-shadow(0 6px 18px rgba(34, 211, 238, 0.22));
+    transition: filter 220ms ease;
   }
 
   @media (max-width: 640px) {
-    .milo-companion { width: 56px; height: 56px; right: 0.6rem; }
+    .milo-companion { width: 56px; height: 56px; margin-left: -28px; margin-top: -28px; }
   }
 
   .milo-companion canvas {
@@ -49,37 +52,49 @@ const animations = {
 
   .milo-shadow {
     position: absolute;
-    inset: -18% -18% -18% -18%;
+    inset: -22% -22% -22% -22%;
     border-radius: 9999px;
-    background: radial-gradient(closest-side, rgba(34,211,238,0.22), rgba(34,211,238,0) 70%);
+    background: radial-gradient(closest-side, rgba(34,211,238,0.28), rgba(34,211,238,0) 70%);
     opacity: 0.9;
     pointer-events: none;
-    animation: milo-breathe 4.2s ease-in-out infinite;
+    animation: milo-breathe 3.6s ease-in-out infinite;
   }
 
   .milo-hint {
     position: absolute;
-    left: -34px;
+    left: -36px;
     top: 50%;
     transform: translateY(-50%);
     font-size: 10px;
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    color: rgba(186, 230, 253, 0.75);
+    color: rgba(186, 230, 253, 0.8);
     opacity: 0;
     transition: opacity 240ms ease, transform 240ms ease;
+    pointer-events: none;
+    white-space: nowrap;
   }
 
   .milo-companion:hover .milo-hint { opacity: 1; transform: translate(-4px, -50%); }
 
+  #milo-sparkles {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 39;
+  }
+
   @keyframes milo-breathe {
     0%, 100% { transform: scale(0.92); opacity: 0.55; }
-    50%      { transform: scale(1.08); opacity: 0.95; }
+    50%      { transform: scale(1.10); opacity: 0.95; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .milo-shadow { animation: none; }
     .milo-companion { transition: none; }
+    #milo-sparkles { display: none; }
   }
 </style>
 
@@ -88,19 +103,12 @@ const animations = {
 
   const el = document.getElementById('milo-companion');
   const canvas = document.getElementById('milo-canvas');
-  if (!el || !canvas) {
-    // bail silently
-  } else {
+  const sparkleCanvas = document.getElementById('milo-sparkles');
+  if (!el || !canvas) { /* bail */ } else {
     const anims = JSON.parse(el.dataset.anims);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // dotLottie player
-    let player = new DotLottie({
-      canvas,
-      src: anims.idle,
-      loop: true,
-      autoplay: true,
-    });
+    let player = new DotLottie({ canvas, src: anims.idle, loop: true, autoplay: true });
 
     let currentKey = 'idle';
     let switching = false;
@@ -108,63 +116,203 @@ const animations = {
       if (!anims[key] || key === currentKey || switching) return;
       switching = true;
       currentKey = key;
-      // pulse
-      el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, '') + ' scale(1.18)';
-      setTimeout(() => {
-        el.style.transform = el.style.transform.replace(/scale\([^)]+\)/, '') + ' scale(1)';
-      }, 260);
+      pulseScale = 1.22;
       try {
         player.load({ src: anims[key], loop: true, autoplay: true });
       } catch (e) {
-        // recreate on failure
         try { player.destroy(); } catch {}
         player = new DotLottie({ canvas, src: anims[key], loop: true, autoplay: true });
       }
       setTimeout(() => { switching = false; }, 320);
     }
 
-    // ---- scroll-lag spring ----
-    // Milo's target y = viewport center, but we lerp toward it with damping so he
-    // visibly trails when you fling-scroll. Pure transform; no layout thrash.
-    const baseTopFraction = 0.42; // a touch above center reads as "looking down"
-    let targetY = window.innerHeight * baseTopFraction;
-    let currentY = targetY;
+    // ---- pixie motion model ----
+    // Two layers combined:
+    //  (a) anchor: a "home" position relative to the viewport that gently
+    //      drifts in a figure-8 around the right side; scroll velocity tugs
+    //      it like a kite tail.
+    //  (b) wing-flutter: high-frequency tiny noise on top, so even when
+    //      stationary, Milo never sits still.
+    const isSmall = window.matchMedia('(max-width: 640px)').matches;
+    const edgePad = isSmall ? 44 : 64;
+
+    let vw = window.innerWidth;
+    let vh = window.innerHeight;
+    let anchorX = vw - edgePad;
+    let anchorY = vh * 0.5;
+
+    // current rendered position (what we lerp toward the anchor)
+    let curX = anchorX;
+    let curY = anchorY;
+
+    // wing-flutter offsets (small fast osc)
+    let flutterPhase = Math.random() * Math.PI * 2;
+
+    // figure-8 idle drift (slow)
+    let driftT = Math.random() * 1000;
+
+    // scroll-velocity lag and tilt
     let scrollVel = 0;
     let lastScroll = window.scrollY;
     let tilt = 0;
     let targetTilt = 0;
+    let pulseScale = 1; // decays back to 1
+
+    // pointer attraction (gentle approach, never overlap)
+    let pointerX = -9999, pointerY = -9999;
+    let pointerActive = false;
+    window.addEventListener('pointermove', (e) => {
+      pointerX = e.clientX; pointerY = e.clientY;
+      pointerActive = true;
+    }, { passive: true });
+    window.addEventListener('pointerleave', () => { pointerActive = false; });
+
+    function recompAnchor() {
+      vw = window.innerWidth;
+      vh = window.innerHeight;
+      anchorX = vw - edgePad;
+      anchorY = vh * 0.5;
+    }
+    window.addEventListener('resize', recompAnchor, { passive: true });
 
     function onScroll() {
       const now = window.scrollY;
       scrollVel = now - lastScroll;
       lastScroll = now;
-      // lag him in the opposite direction of scroll, capped
-      const lagPx = Math.max(-60, Math.min(60, scrollVel * 0.9));
-      targetY = window.innerHeight * baseTopFraction + lagPx;
-      // rotate slightly with velocity for "tipping forward as we go" feel
-      targetTilt = Math.max(-14, Math.min(14, scrollVel * 0.5));
+      targetTilt = Math.max(-16, Math.min(16, scrollVel * 0.5));
     }
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', () => { targetY = window.innerHeight * baseTopFraction; }, { passive: true });
 
-    function tick() {
-      // critical damping vibe
-      currentY += (targetY - currentY) * 0.12;
+    // ---- sparkle trail (canvas) ----
+    let sctx = null;
+    const sparkles = [];
+    function sizeSparkles() {
+      if (!sparkleCanvas) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      sparkleCanvas.width = Math.floor(window.innerWidth * dpr);
+      sparkleCanvas.height = Math.floor(window.innerHeight * dpr);
+      sparkleCanvas.style.width = window.innerWidth + 'px';
+      sparkleCanvas.style.height = window.innerHeight + 'px';
+      sctx = sparkleCanvas.getContext('2d');
+      sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    if (sparkleCanvas) {
+      sizeSparkles();
+      window.addEventListener('resize', sizeSparkles, { passive: true });
+    }
+
+    let lastSparkleAt = 0;
+    function emitSparkle(x, y, speed) {
+      const now = performance.now();
+      // throttle: more sparkles when moving fast
+      const interval = Math.max(36, 160 - speed * 12);
+      if (now - lastSparkleAt < interval) return;
+      lastSparkleAt = now;
+      const count = 1 + Math.floor(Math.min(2, speed * 0.4));
+      for (let i = 0; i < count; i++) {
+        sparkles.push({
+          x: x + (Math.random() - 0.5) * 14,
+          y: y + (Math.random() - 0.5) * 14,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4 + 0.15, // gently drift down
+          life: 0,
+          maxLife: 600 + Math.random() * 500, // ms
+          size: 1.2 + Math.random() * 1.6,
+          hue: 188 + Math.random() * 22, // cyan→teal range
+        });
+      }
+    }
+
+    function renderSparkles(dt) {
+      if (!sctx) return;
+      sctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      for (let i = sparkles.length - 1; i >= 0; i--) {
+        const s = sparkles[i];
+        s.life += dt;
+        if (s.life >= s.maxLife) { sparkles.splice(i, 1); continue; }
+        s.x += s.vx;
+        s.y += s.vy;
+        const t = s.life / s.maxLife;
+        const alpha = (1 - t) * 0.55;
+        const r = s.size * (1 - t * 0.4);
+        sctx.beginPath();
+        sctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+        sctx.fillStyle = `hsla(${s.hue}, 90%, 70%, ${alpha})`;
+        sctx.shadowBlur = 8;
+        sctx.shadowColor = `hsla(${s.hue}, 90%, 70%, ${alpha * 0.8})`;
+        sctx.fill();
+      }
+      sctx.shadowBlur = 0;
+    }
+
+    // ---- main loop ----
+    let prevTime = performance.now();
+    let prevX = curX, prevY = curY;
+    function tick(now) {
+      const dt = Math.min(48, now - prevTime);
+      prevTime = now;
+
+      // (a) anchor drift: gentle figure-8 around the right edge
+      driftT += dt * 0.0007;
+      const driftX = Math.sin(driftT * 1.0) * (isSmall ? 16 : 26);
+      const driftY = Math.sin(driftT * 2.0) * (isSmall ? 14 : 22);
+
+      // scroll-lag pulls Milo opposite scroll direction, bleeds away fast
+      const lagY = Math.max(-70, Math.min(70, scrollVel * 0.9));
+      scrollVel *= 0.86;
+
+      let targetX = anchorX + driftX;
+      let targetY = anchorY + driftY + lagY;
+
+      // pointer attraction: drift toward cursor when within ~280px
+      if (pointerActive) {
+        const dx = pointerX - curX;
+        const dy = pointerY - curY;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 280 && dist > 40) {
+          const pull = (1 - dist / 280) * 0.35;
+          targetX += dx * pull;
+          targetY += dy * pull;
+        } else if (dist <= 40) {
+          // shy: nudge away the last few pixels so we never overlap pointer
+          targetX -= dx * 0.6;
+          targetY -= dy * 0.6;
+        }
+      }
+
+      // (b) wing-flutter: tiny fast wobble
+      flutterPhase += dt * 0.022;
+      const flutterY = Math.sin(flutterPhase * 4.0) * 1.6 + Math.sin(flutterPhase * 7.0) * 0.8;
+      const flutterX = Math.cos(flutterPhase * 3.0) * 1.2;
+
+      // critical-damp lerp toward target
+      curX += (targetX - curX) * 0.10;
+      curY += (targetY - curY) * 0.12;
+
+      // tilt eases toward scroll target then decays
       tilt += (targetTilt - tilt) * 0.18;
-      // bleed off velocity-driven targets toward rest
-      targetY += (window.innerHeight * baseTopFraction - targetY) * 0.06;
-      targetTilt += (0 - targetTilt) * 0.10;
+      targetTilt *= 0.88;
 
-      el.style.top = '0px';
-      el.style.transform = `translate3d(0, ${currentY}px, 0) rotate(${tilt.toFixed(2)}deg)`;
+      // pulse decay
+      pulseScale += (1 - pulseScale) * 0.10;
 
+      const renderX = curX + flutterX;
+      const renderY = curY + flutterY;
+
+      el.style.transform = `translate3d(${renderX.toFixed(2)}px, ${renderY.toFixed(2)}px, 0) rotate(${tilt.toFixed(2)}deg) scale(${pulseScale.toFixed(3)})`;
+
+      // sparkle trail proportional to actual movement
+      const moved = Math.hypot(renderX - prevX, renderY - prevY);
+      if (moved > 0.6) emitSparkle(renderX, renderY, moved);
+      prevX = renderX; prevY = renderY;
+
+      renderSparkles(dt);
       requestAnimationFrame(tick);
     }
     if (!reduceMotion) {
       requestAnimationFrame(tick);
     } else {
-      el.style.top = '50%';
-      el.style.transform = 'translateY(-50%)';
+      el.style.transform = `translate3d(${anchorX}px, ${anchorY}px, 0)`;
     }
 
     // ---- section-aware animation swap ----
@@ -182,7 +330,6 @@ const animations = {
 
     if ('IntersectionObserver' in window && sections.length) {
       const io = new IntersectionObserver((entries) => {
-        // pick the most-visible entry
         let best = null;
         for (const e of entries) {
           if (e.isIntersecting && (!best || e.intersectionRatio > best.intersectionRatio)) best = e;
@@ -195,15 +342,27 @@ const animations = {
       sections.forEach(s => io.observe(s));
     }
 
-    // ---- click reaction ----
+    // ---- click reaction: burst of sparkles + cycle reaction ----
     let clicks = 0;
     el.addEventListener('click', () => {
       clicks++;
       const reactions = ['heart', 'laughing', 'crazy', 'wink'];
       swap(reactions[clicks % reactions.length]);
-      // return to idle-ish after a beat
+      // confetti-ish burst
+      for (let i = 0; i < 14; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = 1 + Math.random() * 2.2;
+        sparkles.push({
+          x: curX, y: curY,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          life: 0,
+          maxLife: 700 + Math.random() * 500,
+          size: 1.4 + Math.random() * 1.8,
+          hue: 188 + Math.random() * 50,
+        });
+      }
       setTimeout(() => {
-        // resume whichever section we are in
         const y = window.scrollY + window.innerHeight / 2;
         let nearest = sections[0];
         let bestDist = Infinity;
