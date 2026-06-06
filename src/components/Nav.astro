@@ -1,8 +1,9 @@
 ---
-import { site } from '../data/site';
+import { site, notes } from '../data/site';
 const links = [
   { href: '#about', label: 'About' },
   { href: '#work', label: 'Work' },
+  ...(notes.length > 0 ? [{ href: '#notes', label: 'Notes' }] : []),
   { href: '#experience', label: 'Experience' },
   { href: '#skills', label: 'Skills' },
 ];

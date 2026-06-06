@@ -1,0 +1,144 @@
+---
+import { notes } from '../data/site';
+
+// Sort: pinned first, then by date desc
+const sorted = [...notes].sort((a, b) => {
+  if (!!b.pinned !== !!a.pinned) return Number(!!b.pinned) - Number(!!a.pinned);
+  return b.date.localeCompare(a.date);
+});
+---
+{sorted.length > 0 && (
+<section id="notes" class="relative py-32">
+  <div class="mx-auto max-w-4xl px-6">
+    <div class="reveal mb-12 flex items-end justify-between gap-6">
+      <div>
+        <span class="text-xs uppercase tracking-[0.3em] text-accent-400">Writing in public</span>
+        <h2 class="font-display mt-3 text-3xl font-semibold leading-tight text-mist-100 sm:text-4xl">
+          Notes
+        </h2>
+      </div>
+    </div>
+
+    <ol class="notes-list reveal">
+      {sorted.map((n, i) => (
+        <li class={`notes-row ${i === 0 ? 'is-lead' : ''}`}>
+          <a
+            href={n.url}
+            target="_blank"
+            rel="noopener"
+            class="notes-link"
+            data-track="cta_note"
+            data-note-title={n.title}
+          >
+            <div class="notes-meta">
+              <span class="notes-venue">{n.venue.toLowerCase()}</span>
+              <span class="notes-dot" aria-hidden="true">·</span>
+              <span class="notes-date">{n.date}</span>
+              {n.pinned && (
+                <>
+                  <span class="notes-dot" aria-hidden="true">·</span>
+                  <span class="notes-pin">latest</span>
+                </>
+              )}
+            </div>
+            <h3 class="notes-title">
+              {n.title}
+              <span class="notes-arrow" aria-hidden="true">↗</span>
+            </h3>
+            <p class="notes-tease">{n.tease}</p>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>
+)}
+
+<style>
+  .notes-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .notes-row {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 28px 0;
+  }
+  .notes-row:last-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  @media (min-width: 640px) {
+    .notes-row { padding: 36px 0; }
+  }
+
+  .notes-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: color 220ms ease;
+  }
+
+  .notes-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: rgba(186, 230, 253, 0.6);
+    text-transform: lowercase;
+  }
+  .notes-venue { color: rgba(186, 230, 253, 0.8); font-weight: 500; }
+  .notes-date  { color: rgba(186, 230, 253, 0.55); }
+  .notes-dot   { color: rgba(186, 230, 253, 0.3); }
+  .notes-pin {
+    color: var(--color-accent-400, #5eead4);
+    font-weight: 600;
+  }
+
+  .notes-title {
+    font-family: var(--font-display, 'Space Grotesk Variable', sans-serif);
+    font-weight: 600;
+    color: var(--color-mist-100, #eef0f4);
+    margin: 10px 0 8px 0;
+    line-height: 1.2;
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    transition: color 220ms ease;
+    display: inline;
+  }
+  .is-lead .notes-title {
+    font-size: clamp(1.4rem, 3vw, 1.85rem);
+  }
+
+  .notes-arrow {
+    display: inline-block;
+    margin-left: 8px;
+    color: rgba(186, 230, 253, 0.4);
+    font-weight: 400;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), color 220ms ease;
+  }
+
+  .notes-tease {
+    margin: 0;
+    color: var(--color-mist-400, #9aa3b2);
+    font-size: 14.5px;
+    line-height: 1.55;
+    max-width: 60ch;
+  }
+  .is-lead .notes-tease {
+    color: var(--color-mist-300, #c4cad5);
+    font-size: 15.5px;
+  }
+
+  .notes-link:hover .notes-title  { color: var(--color-accent-400, #5eead4); }
+  .notes-link:hover .notes-arrow  { color: var(--color-accent-300, #a7f3e2); transform: translate(3px, -3px); }
+  .notes-link:focus-visible { outline: none; }
+  .notes-link:focus-visible .notes-title { color: var(--color-accent-400, #5eead4); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .notes-arrow, .notes-title { transition: none; }
+  }
+</style>

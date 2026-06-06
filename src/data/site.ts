@@ -13,6 +13,20 @@ export const site = {
   },
 };
 
+// Notes: surface 3-5 of your most recent / favorite posts here.
+// Each entry shape:
+//   { title: string, venue: string, date: 'YYYY-MM', url: string, tease: string, pinned?: boolean }
+// venue is shown as a lowercase mono label (e.g. 'substack', 'x', 'linkedin').
+// Leave the array empty to hide the Notes nav item and section entirely.
+export const notes: Array<{
+  title: string;
+  venue: string;
+  date: string;
+  url: string;
+  tease: string;
+  pinned?: boolean;
+}> = [];
+
 export const stats = [
   { value: '10+', label: 'Years shipping', sub: 'Engineering leadership at Airbnb, Twitter, and early-stage startups' },
   { value: '$23.9M', label: 'Annualized impact', sub: 'Identity and trust systems shipped in 2025' },
