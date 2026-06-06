@@ -1,6 +1,11 @@
 ---
 const apiUrl = import.meta.env.PUBLIC_CHAT_API_URL || '';
+// Hide entire feature until backend is wired. Set PUBLIC_CHAT_API_URL in .env
+// (and redeploy) to flip this on. Worker scaffold lives in /worker/.
+const enabled = Boolean(apiUrl);
 ---
+{enabled && (
+<>
 <button id="ask-aj-trigger" class="ask-aj-trigger" type="button" aria-haspopup="dialog" aria-controls="ask-aj-panel">
   <span class="ask-aj-trigger-dot" aria-hidden="true"></span>
   <span>Ask AJ</span>
@@ -429,3 +434,5 @@ const apiUrl = import.meta.env.PUBLIC_CHAT_API_URL || '';
     });
   }
 </script>
+</>
+)}
