@@ -6,6 +6,8 @@ import Posthog from '../components/Posthog.astro';
 const { title, description } = Astro.props as { title?: string; description?: string };
 const pageTitle = title ? `${title} · ${site.short}` : site.name;
 const pageDesc = description ?? site.description;
+const siteUrl = 'https://ajeenkya.github.io';
+const ogImage = `${siteUrl}/og-image.png`;
 ---
 
 <html lang="en">
@@ -19,8 +21,15 @@ const pageDesc = description ?? site.description;
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={pageDesc} />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={site.links.github.replace('github.com/ajeenkya', 'ajeenkya.github.io')} />
+    <meta property="og:url" content={siteUrl} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.name}: Builder.`} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDesc} />
+    <meta name="twitter:image" content={ogImage} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <Posthog />
   </head>
