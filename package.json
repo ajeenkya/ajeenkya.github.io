@@ -9,7 +9,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "verify:milo": "node scripts/verify-milo.mjs",
+    "ship": "npm run build && npm run verify:milo"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
@@ -17,5 +19,8 @@
     "@tailwindcss/vite": "^4.3.0",
     "astro": "^6.4.4",
     "tailwindcss": "^4.3.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }
