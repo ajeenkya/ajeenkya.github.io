@@ -37,15 +37,14 @@ const animations = {
     height: 72px;
     margin-left: -36px;
     margin-top: -36px;
-    z-index: 1; /* below .content-layer (z:10); raised to 55 during greeting */
-    opacity: 0.82; /* recessed-feel since he lives behind content */
-    transition: opacity 220ms ease, z-index 0s linear 220ms;
+    z-index: 55; /* above .content-layer (z:10) so clicks land. Recession comes from opacity + gutter-only landing, not z-stacking. */
+    opacity: 0.82; /* recessed feel: tiny, slow, never overlaps text. */
     pointer-events: auto;
     cursor: pointer;
     transform: translate3d(0, 0, 0);
     will-change: transform;
     filter: drop-shadow(0 6px 18px rgba(34, 211, 238, 0.22));
-    transition: filter 220ms ease;
+    transition: opacity 220ms ease, filter 220ms ease;
   }
 
   @media (max-width: 640px) {
@@ -155,11 +154,9 @@ const animations = {
     z-index: 0; /* always behind content */
   }
 
-  /* When greeting bubble is visible, lift Milo above content so bubble reads. */
+  /* During the returning-visitor greeting, bump opacity to full so the bubble pops. */
   .milo-companion.is-foreground {
-    z-index: 55;
     opacity: 1;
-    transition: opacity 220ms ease, z-index 0s linear 0s;
   }
 
   @keyframes milo-breathe {

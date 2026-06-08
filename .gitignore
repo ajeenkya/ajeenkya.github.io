@@ -26,3 +26,14 @@ pnpm-debug.log*
 # project
 seed/
 .claude/
+
+# >>> aj-os managed (sync-gitignore.py) — do not edit between markers >>>
+.DS_Store
+_sessions/
+*.log
+.env
+.env.local
+.venv/
+__pycache__/
+node_modules/
+# <<< aj-os managed <<<
