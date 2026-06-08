@@ -27,6 +27,8 @@ jobs:
       - run: npm run build
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+      - name: Verify visual integrity (hero, links, no placeholder leaks)
+        run: npm run verify:visual
       - name: Verify Milo click routes to hellomilo.app
         run: npm run verify:milo
       - uses: actions/upload-pages-artifact@v3

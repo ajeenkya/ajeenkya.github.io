@@ -26,6 +26,7 @@ pnpm-debug.log*
 # project
 seed/
 .claude/
+scripts/snapshots/
 
 # >>> aj-os managed (sync-gitignore.py) — do not edit between markers >>>
 .DS_Store

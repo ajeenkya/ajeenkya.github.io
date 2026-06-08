@@ -11,7 +11,9 @@
     "preview": "astro preview",
     "astro": "astro",
     "verify:milo": "node scripts/verify-milo.mjs",
-    "ship": "npm run build && npm run verify:milo"
+    "verify:visual": "node scripts/verify-visual.mjs",
+    "verify": "npm run verify:visual && npm run verify:milo",
+    "ship": "npm run build && npm run verify"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.2.8",
